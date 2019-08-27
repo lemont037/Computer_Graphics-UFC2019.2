@@ -252,24 +252,35 @@ class Cube:
 		x6=p.isOnPlane(r)
 
 		if x1!=None:
-			if math.pow(norm(sum(self.v1, scalarProduct(x1, -1))), 2)+math.pow(norm(sum(self.v4, scalarProduct(x1, -1))), 2)>8*math.pow(self.l, 2):
+			if abs(x1.x-self.p.x)>self.l or abs(x1.y-self.p.y)>self.l or abs(x1.z-self.p.z)>self.l:
 				x1=None
 		if x2!=None:
-			if math.pow(norm(sum(self.v5, scalarProduct(x2, -1))), 2)+math.pow(norm(sum(self.v8, scalarProduct(x2, -1))), 2)>8*math.pow(self.l, 2):
+			if abs(x2.x-self.p.x)>self.l or abs(x2.y-self.p.y)>self.l or abs(x2.z-self.p.z)>self.l:
 				x2=None
 		if x3!=None:
-			if math.pow(norm(sum(self.v1, scalarProduct(x3, -1))), 2)+math.pow(norm(sum(self.v6, scalarProduct(x3, -1))), 2)>8*math.pow(self.l, 2):
+			if abs(x3.x-self.p.x)>self.l or abs(x3.y-self.p.y)>self.l or abs(x3.z-self.p.z)>self.l:
 				x3=None
 		if x4!=None:
-			if math.pow(norm(sum(self.v3, scalarProduct(x4, -1))), 2)+math.pow(norm(sum(self.v8, scalarProduct(x4, -1))), 2)>8*math.pow(self.l, 2):
+			if abs(x4.x-self.p.x)>self.l or abs(x4.y-self.p.y)>self.l or abs(x4.z-self.p.z)>self.l:
 				x4=None
 		if x5!=None:
-			if math.pow(norm(sum(self.v1, scalarProduct(x5, -1))), 2)+math.pow(norm(sum(self.v7, scalarProduct(x5, -1))), 2)>8*math.pow(self.l, 2):
+			if abs(x5.x-self.p.x)>self.l or abs(x5.y-self.p.y)>self.l or abs(x5.z-self.p.z)>self.l:
 				x5=None
 		if x6!=None:
-			if math.pow(norm(sum(self.v2, scalarProduct(x6, -1))), 2)+math.pow(norm(sum(self.v8, scalarProduct(x6, -1))), 2)>8*math.pow(self.l, 2):
+			if abs(x6.x-self.p.x)>self.l or abs(x6.y-self.p.y)>self.l or abs(x6.z-self.p.z)>self.l:
 				x6=None
 		return x1, x2, x3, x4, x5, x6
+		
+class Panel:
+    c=Vector(0, 0, 0)
+
+    def __init__ (self, c, l, h, v) :
+		    self.c = Vector(c.x - (l/2), c.y - (l/2), c.z)
+		    self.l = l
+		    self.h = h
+		    self.v = v
+    def pointOnPanel(self, H, V):
+        return Vector(self.c.x + self.l/(2*self.h) + (H-1)*self.l/self.h, self.c.y + self.l/(2*self.v) + (V-1)*self.l/self.v, self.c.z)
 
 #c=Cylinder(Vector(0, 0, 0), Vector(0, 0, 1), 5, 5)
 #c=Cone(Vector(0, 0, 0), Vector(0, 0, 1), 5, 5)
