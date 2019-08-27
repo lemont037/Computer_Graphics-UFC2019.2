@@ -282,35 +282,29 @@ class Panel:
     def pointOnPanel(self, H, V):
         return Vector(self.c.x + self.l/(2*self.h) + (H-1)*self.l/self.h, self.c.y + self.l/(2*self.v) + (V-1)*self.l/self.v, self.c.z)
 
-#c=Cylinder(Vector(0, 0, 0), Vector(0, 0, 1), 5, 5)
-#c=Cone(Vector(0, 0, 0), Vector(0, 0, 1), 5, 5)
-k=Cube(Vector(0, 0, 0), 2)
-l=Line(Vector(3*random.random(), 3*random.random(), 3*random.random()), Vector(3*random.random(), 3*random.random(), 3*random.random()))
-#l=Line(Vector(0, 0, 0), Vector(1, 0, 0))
+#Main program
+'''
+observer = Vector(0,0,0)
 
-[a, b, c, d, e, f]=k.isOnCube(l)
+panel = Panel(Vector(0,0,4), 4, 400, 400)
 
-if a!=None:
-	a.printV()
-else:
-	print(a)
-if b!=None:
-	b.printV()
-else:
-	print(b)
-if c!=None:
-	c.printV()
-else:
-	print(c)
-if d!=None:
-	d.printV()
-else:
-	print(d)
-if e!=None:
-	e.printV()
-else:
-	print(e)
-if f!=None:
-	f.printV()
-else:
-	print(f)
+cylinder = Cylinder(Vector(0,-2,-10), Vector(0,1,0), 2, 0.5)
+
+cone = Cone(Vector(0,0,-10), Vector(0,1,0), 8, 3)
+
+cube1 = Cube(Vector(0, 1,-20), 6)
+cube2 = Cube(Vector(0, 7,-20), 6)
+cube3 = Cube(Vector(0, 13, -20), 6)
+
+h, v=1
+while h<=400:
+	while v<=400:
+		l=Line(observer, sum(panel.pointOnPanel(h, v), scalarProduct(observer, -1)))
+		[a, b]=cone.isOnCone(l)
+		[c, d]=cylinder.isOnCylinder(l)
+		[e1, e2, e3, e4, e5, e6]=cube1.isOnCube(l)
+		[f1, f2, f3, f4, f5, f6]=cube2.isOnCube(l)
+		[g1, g2, g3, g4, g5, g6]=cube3.isOnCube(l)
+		print("h=", h, "v=", v, ":")
+		print("Cone: ")
+'''
