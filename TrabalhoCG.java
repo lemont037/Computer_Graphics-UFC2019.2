@@ -1,26 +1,53 @@
 // nao utilizei a forma normalizada dos vetores
-// falta a classe do cubo
+// falta terminar de configurar a localizacao de cada coisa na janela
 
-import java.lang.Math;
 class Main {
   public static void main(String[] args) {
-    Ponto C = new Ponto(0, 0, 0);
-    Vetor n = new Vetor(0, 1, 0);
-    double H = 4;
-    double R = 4;
-    Ponto P0 = new Ponto(3, 0, 3);
-    Vetor d = new Vetor(-1, 0.6 , -1);
-    Reta X = new Reta(P0, d);
-    Cone Y = new Cone(C, R, H, n);
-    PontosInt P = Y.IntConReta(X);
-    P.PrintPontos();
+    Espaco E = new Espaco();
+    E.addObjeto(new Cilindro(new Ponto(0,-2,-10), new Vetor(0,1,0), 0.5, 2, "Marrom", 1));
+    E.addObjeto(new Cone(new Ponto(0,0,-10), 3, 8, new Vetor(0,1,0), "Verde", 2));
+    E.addObjeto(new Cubo(new Ponto(0, 1,-20), 6, "Vermelho", 3));
+    E.addObjeto(new Cubo(new Ponto(0, 7,-20), 6, "Vermelho", 4));
+    E.addObjeto(new Cubo(new Ponto(0, 13,-20), 6, "Vermelho", 5));
+    Ponto observador = new Ponto(0,0,0);
+    Muro painel = new Muro(4, new Vetor(0,0,1),new Ponto(0,0,4), 400, 400);
+    Imagem I = new Imagem(400,400);
+    for (int i = 0; i < 400; i++){
+      for (int j = 0; j < 400; j++){
+        Ponto Aux = painel.PnoMuro(i, j);
+        Vetor n = Aux.SubPonto(observador);
+        Reta R = new Reta(observador, n);
+        PontosInt Pfinal = new PontosInt();
+        for (int k = 0; k < E.N; k++){
+          PontosInt p = E.objetos[k].InterReta(R);
+          Pfinal = Pfinal.Uniao(p);
+        }
+        if (Pfinal.getPonto(0) != null){
+          Pfinal.OrdenaPontos();
+          FigurasGeo prim = E.getFigPorId(Pfinal.getPonto(0).id);
+          Pfinal.setPrimObj(prim);
+          Pixel Pix = new Pixel(Pfinal);
+          I.addPixel(Pix, i, j);
+        }
+        else{
+          try{
+            I.pixelNulo(i, j);
+          }
+          catch(Exception e){}
+        }
+      }
+    }
+    Janela janela = new Janela(E, painel, I);
   }
 }
 
 
 // --------- Ponto ----------
+import java.lang.Math;
 class Ponto {
-  double X, Y, Z;
+  double X, Y, Z, T;
+  int id; // figura ao qual o ponto pertence
+  String cor;
 
   Ponto(double X, double Y, double Z){
     this.X = X;
@@ -34,7 +61,31 @@ class Ponto {
     this.Z = Z1;
   }
 
-  Ponto SomaPonto(Ponto p){ // soma entre dois pontos
+  void setT(double T){
+    this.T = T;
+  }
+
+  void setID(int id){
+    this.id = id;
+  }
+
+  void setCor(String cor){
+    this.cor = cor;
+  }
+
+  double getCoordX(){
+    return this.X;
+  } 
+
+  double getCoordY(){
+    return this.Y;
+  }
+
+  double getCoordZ(){
+    return this.Z;
+  }
+
+  Ponto SomaPonto(Ponto p){
     double XSoma = this.X + p.X;
     double YSoma = this.Y + p.Y;
     double ZSoma = this.Z + p.Z;
@@ -42,7 +93,7 @@ class Ponto {
     return PSoma;
   }
 
-  Vetor SubPonto(Ponto p){ // subtracao entre dois pontos, resulta num vetor
+  Vetor SubPonto(Ponto p){
     double XSub = this.X - p.X;
     double YSub = this.Y - p.Y;
     double ZSub = this.Z - p.Z;
@@ -62,30 +113,45 @@ class Ponto {
   public String toString(){
     return "(" + this.X + ", " + this.Y + ", " + this.Z + ")";
   }
-}
 
+  String Id(){
+    return Integer.toString(id);
+  }
+}
 
 // -------- Pontos de Intersecao ----------- (classe que eu criei pq nao consegui fazer nada melhor)
 class PontosInt{ // Classe feita para guardar os pontos de intersecao
   Ponto pontos[];
   int N;
+  FigurasGeo PrimObj;
 
   PontosInt(){
-    this.pontos = new Ponto[2];
+    this.pontos = new Ponto[50];
     this.N = 0;
   }
 
   PontosInt(Ponto p){
-    this.pontos = new Ponto[2];
+    this.pontos = new Ponto[50];
     this.pontos[0] = p;
     this.N = 1;
   }
 
   PontosInt(Ponto p1, Ponto p2){
-    this.pontos = new Ponto[2];
+    this.pontos = new Ponto[50];
     this.pontos[0] = p1;
     this.pontos[1] = p2;
     this.N = 2;
+  }
+
+  Ponto getPonto(int posicao){
+    if (this.N > 0){
+      return this.pontos[posicao];
+    }
+    return null;
+  }
+
+  void setPrimObj(FigurasGeo p){
+    this.PrimObj = p;
   }
 
   void addPonto(Ponto p){
@@ -93,14 +159,59 @@ class PontosInt{ // Classe feita para guardar os pontos de intersecao
     this.N += 1;
   }
 
-  public void PrintPontos(){
-    int i = 0;
-    for (i = 0; i < N; i++){
-      System.out.println(pontos[i].toString());
+  PontosInt Uniao(PontosInt p){
+    if (this.N == 0){
+      return p;
     }
-    if (i == 0){
-      System.out.println("Nao ha intersecao");
+    if (p.N == 0){
+      return this;
     }
+    PontosInt uniao = new PontosInt();
+    for (int i = 0; i < p.N; i++){
+      uniao.addPonto(p.getPonto(i));
+    }
+    for (int i = 0; i < this.N; i++){
+      uniao.addPonto(this.getPonto(i));
+    }
+    return uniao;
+  }
+
+  void OrdenaPontos(){
+    boolean Aux2 = false; // Aux2 diz se esta ordenado ou nao
+    for (int i = 1; i < this.N; i++){
+      if (this.pontos[i-1].T < this.pontos[i].T){
+        Ponto Aux = this.pontos[i-1];
+        this.pontos[i-1] = this.pontos[i];
+        this.pontos[i] = Aux;
+        Aux2 = true;
+      }
+    }
+    if (Aux2){
+      this.OrdenaPontos();
+    }
+  }
+
+  String ObjetosId(){
+    if (this.N == 0){
+      return "Nao ha intersecao";
+    }
+    String Ids = new String(pontos[0].Id());
+    for (int i = 1; i < this.N; i++){
+      String aux1 = pontos[i-1].Id();
+      String aux2 = pontos[i].Id();
+      if (!(aux1.equals(aux2))){
+        Ids = Ids.concat(" " + pontos[i].Id());
+      }
+    }
+    return Ids;
+  }
+
+  public String toString(){
+    String pts = new String();
+    for (int i = 0; i< this.N; i++){
+      pts = pts.concat(pontos[i].toString() + "\n");
+    }
+    return pts;
   }
 }
 
@@ -134,7 +245,7 @@ class Vetor{
     this.Z = Z;
   }
 
-  Vetor ProdEscalar(double escalar){ // produto entre um vetor e um escalar
+  Vetor ProdEscalar(double escalar){
     double X1 = this.X * escalar;
     double Y1 = this.Y * escalar;
     double Z1 = this.Z * escalar;
@@ -142,31 +253,31 @@ class Vetor{
     return Prod;
   }
 
-  double ProdVetorial(Vetor v){ // produto entre dois vetores
+  double ProdVetorial(Vetor v){
     double Prod = (this.X * v.X) + (this.Y * v.Y) + (this.Z * v.Z);
     return Prod;
   }
 
-  double ProdVetPt(Ponto p){ // produto entre vetor e ponto
+  double ProdVetPt(Ponto p){
     double Prod = (this.X * p.X) + (this.Y * p.Y) + (this.Z * p.Z);
     return Prod;
   }
 
-  Ponto SomaPtVt(Ponto p){ // soma entre um ponto e um vetor
+  Ponto SomaPtVt(Ponto p){
     double X1 = this.X + p.X;
     double Y1 = this.Y + p.Y;
     double Z1 = this.Z + p.Z;
     return new Ponto(X1, Y1, Z1);
   }
 
-  Ponto SubPtVt(Ponto p){ // subtracao entre um ponto e um vetor
+  Ponto SubPtVt(Ponto p){
     double X1 = p.X - this.X;
     double Y1 = p.Y - this.Y;
     double Z1 = p.Z - this.Z;
     return new Ponto(X1, Y1, Z1);
   }
 
-  Vetor SubVetor(Vetor v){ // subtracao entre dois vetores
+  Vetor SubVetor(Vetor v){
     double XSub = this.X - v.X;
     double YSub = this.Y - v.Y;
     double ZSub = this.Z - v.Z;
@@ -175,55 +286,63 @@ class Vetor{
   }
 }
 
-
 // ---------- Plano ----------
 class Plano{
   Ponto Ppl; // Ponto qualquer do plano
   Vetor n; // Vetor unitario perpendicular ao plano
 
-  Plano(Ponto P0, Vetor n){
-    this.Ppl = P0;
+  Plano(Ponto P, Vetor n){
+    this.Ppl = P;
     this.n = n;
   }
 
   Ponto InterRetaPlano(Reta R){ // (P - Ppl) * n = 0
+    if (this.n.ProdVetorial(R.d) == 0){
+      return null;
+    }
     Vetor PplP0 = this.Ppl.SubPonto(R.p0);
     double T =  PplP0.ProdVetorial(this.n) / this.n.ProdVetorial(R.d);
     Ponto PInt = R.PnaReta(T);
+    PInt.setT(T);
     return PInt;
   }
 }
 
-
 // --------- Muro ---------
-class Painel extends Plano{ // Vetor do muro precisa ser paralelo ao eixo Z (ou outro eixo, nesse caso precisa alterar o codigo)
+class Muro extends Plano{ // Vetor do muro precisa ser paralelo ao eixo Z
   double L; // L = lado
   Ponto buracos[][];
   int H, V;
 
-  Painel(double L, Vetor n, Ponto C, int h, int v){
-    super(new Ponto((C.X - L/2), (C.Y - L/2), C.Z), n); // o ponto de referencia eh o do canto inferior esquerdo e nao o centro do painel
+  Muro(double L, Vetor n, Ponto C, int h, int v){
+    super(new Ponto((C.X - L/2), (C.Y + L/2), C.Z), n);
     this.L = L;
     this.buracos = new Ponto[h][v];
     this.H = h;
     this.V = v;
   }
-  
-  Ponto PnoPainel(int h, int v){ // h = posicao na matriz da esquerda para direita, v = posicao na matriz de baixo para cima, L/2H+(h-1)*L/H
-    Ponto p = new Ponto(Ppl.X + (this.L/2*this.H) + (h-1)*L/H, Ppl.Y + (this.L/2*this.V) + (h-1)*L/H, Ppl.Z);
+
+  Ponto PnoMuro(int h, int v){ // Calculo das coords X e Y do ponto no muro, L/2H+(h-1)*L/H
+    Ponto p = new Ponto(this.Ppl.X + (this.L/2*this.H) + (h-1)*this.L/this.H, this.Ppl.Y - (this.L/2*this.V) - (v-1)*this.L/this.V, this.Ppl.Z);
+    this.buracos[h][v] = p;
     return p;
   }
 }
 
-
 // -------- Esfera ---------
-class Esfera{
+import java.lang.Math;
+class Esfera extends FigurasGeo{
   Ponto C; // Ponto do centro da esfera
   double R; // R = raio
+  int id;
+  String cor;
 
-  Esfera(Ponto C, double R){
+  Esfera(Ponto C, double R, String cor, int id){
     this.C = C;
     this.R = R;
+    this.cor = cor;
+    this.id = id;
+    this.acertado = false;
   }
 
   double CalculoDeltaEsf(Reta R){
@@ -234,41 +353,54 @@ class Esfera{
     return Delta;
   }
 
-  PontosInt IntEsfReta(Reta R){ // (P-C)*(P-C) = R**2
-    double a = R.d.ProdVetorial(R.d);
-    double b = (R.p0.SubPonto(this.C)).ProdVetorial(R.d);
-    double Delta = this.CalculoDeltaEsf(R);
+  PontosInt InterReta(Reta r){ // (P-C)*(P-C) = R**2
+    double a = r.d.ProdVetorial(r.d);
+    double b = (r.p0.SubPonto(this.C)).ProdVetorial(r.d);
+    double Delta = this.CalculoDeltaEsf(r);
     if (Delta < 0) {
-      return null;
+      new PontosInt();
     }
     if (Delta == 0){
       double T = -b/a;
-      Ponto p1 = R.PnaReta(T);
+      Ponto p1 = r.PnaReta(T);
+      p1.setT(T);
+      p1.setCor(this.cor);
+      p1.setID(id);
       return new PontosInt(p1);
     }
     if (Delta > 0){
       double T = (-b + Math.sqrt(Delta)) / a;
-      Ponto p1 = R.PnaReta(T);
+      Ponto p1 = r.PnaReta(T);
+      p1.setT(T);
+      p1.setID(this.id);
+      p1.setCor(this.cor);
       T = (-b - Math.sqrt(Delta)) / a;
-      Ponto p2 = R.PnaReta(T);
+      Ponto p2 = r.PnaReta(T);
+      p2.setT(T);
+      p2.setID(this.id);
+      p2.setCor(this.cor);
       return new PontosInt(p1, p2);
     }
-    return null;
+    return new PontosInt();
   }
 }
 
 
 //  --------- Cilindro ---------
-class Cilindro{
+import java.lang.Math;
+class Cilindro extends FigurasGeo{
   Ponto B; // Ponto da base do cilindro
   double R, H; // R = raio; H = altura
   Vetor u; // Vetor unitario da direcao e sentido do cilindro
 
-  Cilindro(Ponto B, Vetor u, double R, double H){
+  Cilindro(Ponto B, Vetor u, double R, double H, String cor, int id){
     this.B = B;
     this.u = u;
     this.R = R;
     this.H = H;
+    this.cor = cor;
+    this.id = id;
+    this.acertado = false;
   }
 
   double CalculoDeltaCil(Reta r){
@@ -281,7 +413,7 @@ class Cilindro{
     return Delta;
   }
 
-  PontosInt IntCilReta(Reta r){ 
+  PontosInt InterReta(Reta r){ 
     Vetor w = r.d.SubVetor(this.u.ProdEscalar(r.d.ProdVetorial(this.u)));
     Vetor v = r.p0.SubPonto(this.B).SubVetor(this.u.ProdEscalar(r.p0.SubPonto(this.B).ProdVetorial(this.u)));
     double a = w.ProdVetorial(w);
@@ -295,21 +427,29 @@ class Cilindro{
         PontosInt PtsValidos = new PontosInt();
         if (Dist < this.R){
           Ponto topo = r.d.ProdEscalar(H).SomaPtVt(IntPlanoReta);
+          topo.setT(H + IntPlanoReta.T);
+          topo.setCor(cor);
+          topo.setID(id);
+          IntPlanoReta.setID(id);
+          IntPlanoReta.setCor(cor);
           PtsValidos.addPonto(IntPlanoReta);
           PtsValidos.addPonto(topo);
         }
         return PtsValidos;
       }
-      return null;
+      return new PontosInt();
     }
     if (Delta == 0){
       double T = -b / a;
       Ponto p1 = r.PnaReta(T);
       double Verif = p1.SubPonto(this.B).ProdVetorial(this.u);
       if (Verif >= 0 && Verif <= H){
+        p1.setT(T);
+        p1.setID(this.id);
+        p1.setCor(cor);
         return new PontosInt(p1);
       }
-    return null;
+    return new PontosInt();
     }
     if (Delta > 0){
       boolean p1V = false, p2V = false;
@@ -318,6 +458,9 @@ class Cilindro{
       double Verif1 = p1.SubPonto(this.B).ProdVetorial(this.u);
       PontosInt PtsValidos = new PontosInt();
       if (Verif1 >= 0 && Verif1 <= H){
+        p1.setT(T);
+        p1.setID(id);
+        p1.setCor(cor);
         PtsValidos.addPonto(p1);
         p1V = true;
       }
@@ -325,6 +468,9 @@ class Cilindro{
       Ponto p2 = r.PnaReta(T);
       double Verif2 = p2.SubPonto(this.B).ProdVetorial(this.u);
       if (Verif2 >= 0 && Verif2 <= H){
+        p2.setT(T);
+        p2.setID(id);
+        p2.setCor(cor);
         PtsValidos.addPonto(p2);
         p2V = true;
       }
@@ -333,10 +479,15 @@ class Cilindro{
         Ponto IntPlReta = pl.InterRetaPlano(r);
         double Dist = IntPlReta.Distancia(B);
         if (Dist < this.R){
+          IntPlReta.setID(id);
+          IntPlReta.setCor(cor);
           PtsValidos.addPonto(IntPlReta);
         }
         else{
           Ponto Int = r.d.ProdEscalar(H).SomaPtVt(IntPlReta);
+          Int.setT(H + IntPlReta.T);
+          Int.setID(id);
+          Int.setCor(cor);
           PtsValidos.addPonto(Int);
         }
       }
@@ -344,44 +495,59 @@ class Cilindro{
         Plano pl = new Plano(this.B, this.u);
         Ponto IntPlaReta = pl.InterRetaPlano(r);
         Ponto IntRetaTopo = r.d.ProdEscalar(H).SomaPtVt(IntPlaReta);
+        IntRetaTopo.setT(H + IntPlaReta.T);
+        IntRetaTopo.setID(id);
+        IntRetaTopo.setCor(cor);
+        IntPlaReta.setID(id);
+        IntPlaReta.setCor(cor);
         PtsValidos.addPonto(IntPlaReta);
         PtsValidos.addPonto(IntRetaTopo);
       }
       return PtsValidos;
     }
-    return null;
+    return new PontosInt();
   }
 }
 
 
 // -------- Cone ---------
-class Cone{ // cos**2(X) = H**2 / H**2 + R**2
+import java.lang.Math;
+class Cone extends FigurasGeo{ // cos**2(X) = H**2 / H**2 + R**2
   Vetor n; // Vetor direcional do cone
   Ponto C, V; // C = centro da base, V = vertice do cone
   double H, R; // H = altura, R = raio
 
-  Cone(Ponto C, Ponto V, double R, double H, Vetor n){
+  Cone(Ponto C, Ponto V, double R, double H, Vetor n, String cor, int id){
     this.n = n;
     this.H = H;
     this.R = R;
     this.C = C;
     this.V = V;
+    this.cor = cor;
+    this.id = id;
+    this.acertado = false;
   }
 
-  Cone(Ponto C, double R, double H, Vetor n){
+  Cone(Ponto C, double R, double H, Vetor n, String cor, int id){
     this.C = C;
     this.n = n;
     this.R = R;
     this.H = H;
     this.V = n.ProdEscalar(H).SomaPtVt(C);
+    this.cor = cor;
+    this.id = id;
+    this.acertado = false;
   }
 
-  Cone(double R, double H, Vetor n, Ponto V){
+  Cone(double R, double H, Vetor n, Ponto V, String cor, int id){
     this.V = V;
     this.H = H;
     this.R = R;
     this.n = n;
     this.C = n.ProdEscalar(H).SubPtVt(V);
+    this.cor = cor;
+    this.id = id;
+    this.acertado = false;
   }
 
   double CalculoDeltaCon(Reta r){
@@ -393,7 +559,7 @@ class Cone{ // cos**2(X) = H**2 / H**2 + R**2
     return Delta;
   }
 
-  PontosInt IntConReta(Reta r){
+  PontosInt InterReta(Reta r){
     Vetor v = V.SubPonto(r.p0);
     double a = (r.d.ProdVetorial(this.n))*(r.d.ProdVetorial(this.n)) - (r.d.ProdVetorial(r.d) * (H*H/((H*H)+(R*R))));
     double b = v.ProdVetorial(r.d)*(H*H/((H*H)+(R*R)))-(v.ProdVetorial(n) * r.d.ProdVetorial(n));
@@ -403,17 +569,23 @@ class Cone{ // cos**2(X) = H**2 / H**2 + R**2
       double T = -(c / (2 * b));
       Ponto p1 = r.PnaReta(T);
       if (V.SubPonto(p1).ProdVetorial(n) >= 0 && V.SubPonto(p1).ProdVetorial(n) <= H){
+        p1.setT(T);
+        p1.setCor(cor);
+        p1.setID(this.id);
         return new PontosInt(p1);
       }
-      return null;
+      return new PontosInt();
     }
     if (Delta < 0){
-      return null;
+      return new PontosInt();
     }
     if (Delta == 0){
       double T = -b / a;
       Ponto p1 = r.PnaReta(T);
       if (V.SubPonto(p1).ProdVetorial(n) >= 0 && V.SubPonto(p1).ProdVetorial(n) <= H){
+        p1.setT(T);
+        p1.setCor(cor);
+        p1.setID(this.id);
         return new PontosInt(p1);
       }
       return null;
@@ -425,21 +597,292 @@ class Cone{ // cos**2(X) = H**2 / H**2 + R**2
       Ponto p1 = r.PnaReta(T1);
       if (V.SubPonto(p1).ProdVetorial(n) >= 0 && V.SubPonto(p1).ProdVetorial(n) <= H){
         PV1 = true;
+        p1.setT(T1);
+        p1.setCor(cor);
+        p1.setID(this.id);
         IntRetaCon.addPonto(p1);
       }
       double T2 = (-b - Math.sqrt(Delta)) / a;
       Ponto p2 = r.PnaReta(T2);
       if (V.SubPonto(p2).ProdVetorial(n) >= 0 && V.SubPonto(p2).ProdVetorial(n) <= H){
         PV2 = true;
+        p2.setT(T2);
+        p2.setCor(cor);
+        p2.setID(this.id);
         IntRetaCon.addPonto(p2);
       }
       Plano pl = new Plano(this.C, this.n);
       Ponto IntRetaPl = pl.InterRetaPlano(r);
       if(IntRetaPl.Distancia(this.C) < this.R){
+        IntRetaPl.setID(this.id);
+        IntRetaPl.setCor(cor);
         IntRetaCon.addPonto(IntRetaPl);
       }
       return IntRetaCon;
     }
+    return new PontosInt();
+  }
+}
+
+// ---------- Cubo ----------
+import java.lang.Math;
+class Cubo extends FigurasGeo{
+  double A; // aresta
+  Ponto p0, p1, p2, p3, p4, p5, p6, p7, p8;
+
+  Cubo(Ponto p, double A, String cor, int id){
+    this.p0 = p;
+    this.A = A;
+    this.cor = cor;
+    this.id = id;
+    this.acertado = false;
+    this.p1 = new Ponto(p.X+A/2, p.Y+A/2, p.Z+A/2);
+		this.p2 = new Ponto(p.X+A/2, p.Y+A/2, p.Z-A/2);
+		this.p3 = new Ponto(p.X+A/2, p.Y-A/2, p.Z+A/2);
+		this.p4 = new Ponto(p.X+A/2, p.Y-A/2, p.Z-A/2);
+		this.p5 = new Ponto(p.X-A/2, p.Y+A/2, p.Z+A/2);
+		this.p6 = new Ponto(p.X-A/2, p.Y+A/2, p.Z-A/2);
+		this.p7 = new Ponto(p.X-A/2, p.Y-A/2, p.Z+A/2);
+  }
+
+  PontosInt InterReta(Reta r){
+    PontosInt ptsInt = new PontosInt();
+    Ponto P1 = new Ponto(p0.X + A/2, p0.Y, p0.Z);
+    Ponto P2 = new Ponto(p0.X - A/2, p0.Y, p0.Z);
+    Ponto P3 = new Ponto(p0.X, p0.Y + A/2, p0.Z);
+    Ponto P4 = new Ponto(p0.X, p0.Y - A/2, p0.Z);
+    Ponto P5 = new Ponto(p0.X, p0.Y, p0.Z + A/2);
+    Ponto P6 = new Ponto(p0.X, p0.Y, p0.Z - A/2);
+    Plano face1 = new Plano(P1, new Vetor(1,0,0));
+    Plano face2 = new Plano(P2, new Vetor(1,0,0));
+    Plano face3 = new Plano(P3, new Vetor(0,1,0));
+    Plano face4 = new Plano(P4, new Vetor(0,1,0));
+    Plano face5 = new Plano(P5, new Vetor(0,0,1));
+    Plano face6 = new Plano(P6, new Vetor(0,0,1));
+    Ponto Int1 = face1.InterRetaPlano(r);
+    Ponto Int2 = face2.InterRetaPlano(r);
+    Ponto Int3 = face3.InterRetaPlano(r);
+    Ponto Int4 = face4.InterRetaPlano(r);
+    Ponto Int5 = face5.InterRetaPlano(r);
+    Ponto Int6 = face6.InterRetaPlano(r);
+    if (Math.abs(Int1.X - P1.X) <= A/2 && Math.abs(Int1.Y - P1.Y) <= A/2 && Math.abs(Int1.Z - P1.Z) <= A/2){
+      Int1.setID(id);
+      Int1.setCor(this.cor);
+      ptsInt.addPonto(Int1);
+    }
+    if (Math.abs(Int2.X - P2.X) <= A/2 && Math.abs(Int2.Y - P2.Y) <= A/2 && Math.abs(Int2.Z - P2.Z) <= A/2){
+      Int2.setID(id);
+      Int2.setCor(this.cor);
+      ptsInt.addPonto(Int2);
+    }
+    if (Math.abs(Int3.X - P3.X) <= A/2 && Math.abs(Int3.Y - P3.Y) <= A/2 && Math.abs(Int3.Z - P3.Z) <= A/2){
+      Int3.setID(id);
+      Int3.setCor(this.cor);
+      ptsInt.addPonto(Int3);
+    }
+    if (Math.abs(Int4.X - P4.X) <= A/2 && Math.abs(Int4.Y - P4.Y) <= A/2 && Math.abs(Int4.Z - P4.Z) <= A/2){
+      Int4.setID(id);
+      Int4.setCor(this.cor);
+      ptsInt.addPonto(Int4);
+    }
+    if (Math.abs(Int5.X - P5.X) <= A/2 && Math.abs(Int5.Y - P5.Y) <= A/2 && Math.abs(Int5.Z - P5.Z) <= A/2){
+      Int5.setID(id);
+      Int5.setCor(this.cor);
+      ptsInt.addPonto(Int5);
+    }
+    if (Math.abs(Int6.X - P6.X) <= A/2 && Math.abs(Int6.Y - P6.Y) <= A/2 && Math.abs(Int6.Z - P6.Z) <= A/2){
+      Int6.setID(id);
+      Int6.setCor(this.cor);
+      ptsInt.addPonto(Int6);
+    }
+    return ptsInt;
+  }
+}
+
+
+// ---------- Espaco ----------
+class Espaco{
+  int N; // N = numero de objetos no Espaco
+  FigurasGeo objetos[];
+
+  Espaco(){
+    this.N = 0;
+    this.objetos = new FigurasGeo[10];
+  }
+
+  void addObjeto(FigurasGeo obj){
+    objetos[this.N] = obj;
+    this.N += 1;
+  }
+
+  FigurasGeo getFigPorId(int id){
+    for (int i = 0; i < N; i++){
+      if (objetos[i].id == id){
+        return objetos[i];
+      }
+    }
     return null;
+  }
+}
+
+
+// ---------- Figuras Geometricas ---------
+abstract class FigurasGeo{
+  String cor;
+  int id;
+  boolean acertado;
+
+  PontosInt InterReta(Reta r){
+    return new PontosInt();
+  };
+
+  void Acertou(){
+    this.acertado = true;
+  }
+}
+
+
+// --------- Pixel ---------
+class Pixel{
+  String cor;
+  PontosInt ptsInt;
+  FigurasGeo PrimeiroObjeto;
+  boolean visivel;
+
+  Pixel(){
+    this.cor = "Azul";
+    this.visivel = false;
+  }
+
+  Pixel(PontosInt ptsInt){
+    this.ptsInt = ptsInt;
+    this.cor = ptsInt.pontos[0].cor;
+    this.PrimeiroObjeto = ptsInt.PrimObj;
+    this.visivel = false;
+  }
+
+  String printOrdem(){
+    return ptsInt.ObjetosId();
+  }
+}
+
+
+// ---------- Imagem ---------
+class Imagem{
+  Pixel pixels[][];
+  int H, V;
+
+  Imagem(int h, int v){
+    Pixel[][] pixels = new Pixel[h][v];
+    this.H = h;
+    this.V = v;
+  }
+
+  void addPixel(Pixel p, int h, int v){
+    pixels[h][v] = p;
+  }
+
+  void pixelNulo(int h, int v){
+    pixels[h][v] = new Pixel();
+  }
+
+  Pixel getPixel(int h, int v){
+    return pixels[h][v];
+  }
+}
+
+// ---------- Janela -------------
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+class Janela extends Frame{
+  Janela(Espaco E, Muro M, Imagem I){
+
+    JLabel l1 = new JLabel("Tiro:");
+    JLabel l2 = new JLabel("Posicao do ponto no painel:");
+    JLabel l3 = new JLabel("Ordem dos objetos atingidos:");
+    JLabel l4 = new JLabel("Pontos atingidos:");
+    JLabel posicao = new JLabel("");
+    JLabel ordem = new JLabel("");
+    JLabel pontos = new JLabel("");
+    JLabel la = new JLabel("");
+
+    l1.setBounds(20,40,100,30);
+    l2.setBounds(20,110,250,30);
+    posicao.setBounds(20,145,200,30);
+    l3.setBounds(20,180,250,30);
+    ordem.setBounds(20,215,250,30);
+    l4.setBounds(20,250,250,30);
+    pontos.setBounds(20,285,250,30);
+
+    JTextField TiroX = new JTextField();
+    JTextField TiroY = new JTextField();
+
+    TiroX.setBounds(20,80,80,20);
+    TiroY.setBounds(100,80,80,20);
+
+    JButton Atirar = new JButton("Atirar");
+
+    Atirar.setBounds(130,40,100,30);
+
+    JPanel quadro = new JPanel();
+
+    quadro.setBounds(300,50,400,400);
+
+    quadro.add(new DrawingComponent(I));
+
+    Atirar.addActionListener(new ActionListener(){
+      public void actionPerformed(ActionEvent e) {
+        String s1 = TiroX.getText();
+        String s2 = TiroY.getText();
+        int h = Integer.parseInt(s1);
+        int v = Integer.parseInt(s2);
+        posicao.setText(M.buracos[h][v].toString());
+        ordem.setText(I.pixels[h][v].printOrdem());
+        pontos.setText(I.pixels[h][v].ptsInt.toString());
+      }
+    });
+
+    addWindowListener(new WindowAdapter(){
+      public void windowClosing(WindowEvent f){
+        dispose();  }    });
+
+    add(l1); add(l2); add(l3); add(l4); add(posicao); add(ordem); add(pontos); add(TiroX); add(TiroY); add(Atirar); add(quadro); add(la);
+
+    setVisible(true);
+    setSize(750,500);
+    setLocation(150,150);
+  }
+}
+
+// ----------- Drawing Component --------------
+import java.awt.*;
+class DrawingComponent extends Component{
+  Imagem I;
+  DrawingComponent(Imagem I){
+    this.I = I;
+  }
+  public void paint(Graphics g){
+    for (int i = 0; i < I.H; i++){
+      for (int j = 0; j < I.V; j++){
+        if (!(I.pixels[i][j].visivel)){
+          g.setColor(Color.BLUE);
+        }
+        if (I.pixels[i][j].equals("Azul")){
+          g.setColor(Color.BLUE);
+        }
+        if (I.pixels[i][j].equals("Marrom")){
+          g.setColor(new Color(150,75,0));
+        }
+        if (I.pixels[i][j].equals("Verde")){
+          g.setColor(Color.GREEN);
+        }
+        if (I.pixels[i][j].equals("Vermelho")){
+          g.setColor(Color.RED);
+        }
+        g.drawLine(i,j,i,j);
+      }
+    }
   }
 }
