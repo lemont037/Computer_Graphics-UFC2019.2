@@ -13,7 +13,7 @@ class Main {
     Ponto ViewUp = new Ponto();
     Ponto observador = new Ponto(0,0,0);
     Vetor K = observador.SubPonto(LookAt);
-    Vetor k = K.prodEscalar(1/sqrt(K.prodEscalar(K));
+    Vetor k = K.ProdEscalar(1/sqrt(K.ProdEscalar(K));
     Muro painel = new Muro(4, new Vetor(0,0,1),new Ponto(0,0,4), 400, 400);
     Imagem I = new Imagem(400,400);
     for (int i = 0; i < 400; i++){
