@@ -789,8 +789,18 @@ class Imagem{
   Pixel getPixel(int h, int v){
     return pixels[h][v];
   }
-}
 
+  void atingido(int h, int v){
+    pixels[h][v].PrimeiroObjeto.acertado = true;
+    for (int i = 0; i < this.H; i++){
+      for (int j = 0; j < this.V; j++){
+        if (pixels[i][j].PrimeiroObjeto.acertado){
+          pixels[i][j].visivel = true;
+        }
+      }
+    }
+  }
+}
 // ---------- Janela -------------
 import java.awt.*;
 import java.awt.event.*;
@@ -841,6 +851,7 @@ class Janela extends Frame{
         posicao.setText(M.buracos[h][v].toString());
         ordem.setText(I.pixels[h][v].printOrdem());
         pontos.setText(I.pixels[h][v].ptsInt.toString());
+	I.atingido(h,v);
       }
     });
 
