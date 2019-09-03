@@ -825,6 +825,13 @@ class Janela extends Frame{
     ordem.setBounds(20,215,250,30);
     l4.setBounds(20,250,250,30);
     pontos.setBounds(20,285,250,30);
+    l1.setVisible(true);
+    l2.setVisible(true);
+    l3.setVisible(true);
+    l4.setVisible(true);
+    posição.setVisible(true);
+    ordem.setVisible(true);
+    pontos.setVisible(true);
 
     JTextField TiroX = new JTextField();
     JTextField TiroY = new JTextField();
@@ -852,6 +859,7 @@ class Janela extends Frame{
         ordem.setText(I.pixels[h][v].printOrdem());
         pontos.setText(I.pixels[h][v].ptsInt.toString());
 	I.atingido(h,v);
+        quadro.add(new DrawingComponent(I));
       }
     });
 
