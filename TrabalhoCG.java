@@ -323,7 +323,7 @@ class Muro extends Plano{ // Vetor do muro precisa ser paralelo ao eixo Z
   }
 
   Ponto PnoMuro(int h, int v){ // Calculo das coords X e Y do ponto no muro, L/2H+(h-1)*L/H
-    Ponto p = new Ponto(this.Ppl.X + (this.L/2*this.H) + (h-1)*this.L/this.H, this.Ppl.Y - (this.L/2*this.V) - (v-1)*this.L/this.V, this.Ppl.Z);
+    Ponto p = new Ponto(this.Ppl.X + (this.L/(2*this.H)) + (h-1)*this.L/this.H, this.Ppl.Y - (this.L/(2*this.V)) - (v-1)*this.L/this.V, this.Ppl.Z);
     this.buracos[h][v] = p;
     return p;
   }
