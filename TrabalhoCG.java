@@ -9,7 +9,11 @@ class Main {
     E.addObjeto(new Cubo(new Ponto(0, 1,-20), 6, "Vermelho", 3));
     E.addObjeto(new Cubo(new Ponto(0, 7,-20), 6, "Vermelho", 4));
     E.addObjeto(new Cubo(new Ponto(0, 13,-20), 6, "Vermelho", 5));
+    Ponto LookAt = new Ponto();
+    Ponto ViewUp = new Ponto();
     Ponto observador = new Ponto(0,0,0);
+    Vetor K = observador.SubPonto(LookAt);
+    Vetor k = K.prodEscalar(1/sqrt(K.prodEscalar(K));
     Muro painel = new Muro(4, new Vetor(0,0,1),new Ponto(0,0,4), 400, 400);
     Imagem I = new Imagem(400,400);
     for (int i = 0; i < 400; i++){
