@@ -2,6 +2,7 @@ import java.lang.Math;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.text.DecimalFormat;
 
 class Main {
   public static void main(String[] args) {
@@ -11,11 +12,11 @@ class Main {
     E.addObjeto(new Cubo(new Ponto(0, 1,-20), 6, "Vermelho", 3));
     E.addObjeto(new Cubo(new Ponto(0, 7,-20), 6, "Vermelho", 4));
     E.addObjeto(new Cubo(new Ponto(0, 13,-20), 6, "Vermelho", 5));
-    Ponto LookAt = new Ponto();
-    Ponto ViewUp = new Ponto();
+    //Ponto LookAt = new Ponto();
+    //Ponto ViewUp = new Ponto();
     Ponto observador = new Ponto(0,0,0);
-    Vetor K = observador.SubPonto(LookAt);
-    Vetor k = K.ProdEscalar(1/sqrt(K.ProdEscalar(K));
+    //Vetor K = observador.SubPonto(LookAt);
+    //Vetor k = K.ProdEscalar(1/sqrt(K.ProdEscalar(K));
     Muro painel = new Muro(4, new Vetor(0,0,1),new Ponto(0,0,4), 400, 400);
     Imagem I = new Imagem(400,400);
     for (int i = 0; i < 400; i++){
@@ -28,18 +29,16 @@ class Main {
           PontosInt p = E.objetos[k].InterReta(R);
           Pfinal = Pfinal.Uniao(p);
         }
-        if (Pfinal.getPonto(0) != null){
+        if (Pfinal.N != 0){
           Pfinal.OrdenaPontos();
           FigurasGeo prim = E.getFigPorId(Pfinal.getPonto(0).id);
           Pfinal.setPrimObj(prim);
           Pixel Pix = new Pixel(Pfinal);
           I.addPixel(Pix, i, j);
+
         }
         else{
-          try{
-            I.pixelNulo(i, j);
-          }
-          catch(Exception e){}
+          I.pixelNulo(i, j);
         }
       }
     }
@@ -116,7 +115,8 @@ class Ponto {
   }
 
   public String toString(){
-    return "(" + this.X + ", " + this.Y + ", " + this.Z + ")";
+    DecimalFormat df = new DecimalFormat("0.000");
+    return "(" + df.format(this.X) + ", " + df.format(this.Y) + ", " + df.format(this.Z) + ")";
   }
 
   String Id(){
@@ -212,6 +212,9 @@ class PontosInt{ // Classe feita para guardar os pontos de intersecao
   }
 
   public String toString(){
+    if (this.N == 0){
+      return "Nao ha intersecao";
+    }
     String pts = new String();
     for (int i = 0; i< this.N; i++){
       pts = pts.concat(pontos[i].toString() + "\n");
@@ -328,7 +331,7 @@ class Muro extends Plano{ // Vetor do muro precisa ser paralelo ao eixo Z
   }
 
   Ponto PnoMuro(int h, int v){ // Calculo das coords X e Y do ponto no muro, L/2H+(h-1)*L/H
-    Ponto p = new Ponto(this.Ppl.X + (this.L/(2*this.H)) + (h-1)*this.L/this.H, this.Ppl.Y - (this.L/(2*this.V)) - (v-1)*this.L/this.V, this.Ppl.Z);
+    Ponto p = new Ponto(this.Ppl.X + (this.L/(2*this.H)) + (h)*this.L/this.H, this.Ppl.Y - (this.L/(2*this.V)) - (v)*this.L/this.V, this.Ppl.Z);
     this.buracos[h][v] = p;
     return p;
   }
@@ -638,12 +641,12 @@ class Cubo extends FigurasGeo{
     this.id = id;
     this.acertado = false;
     this.p1 = new Ponto(p.X+A/2, p.Y+A/2, p.Z+A/2);
-		this.p2 = new Ponto(p.X+A/2, p.Y+A/2, p.Z-A/2);
-		this.p3 = new Ponto(p.X+A/2, p.Y-A/2, p.Z+A/2);
-		this.p4 = new Ponto(p.X+A/2, p.Y-A/2, p.Z-A/2);
-		this.p5 = new Ponto(p.X-A/2, p.Y+A/2, p.Z+A/2);
-		this.p6 = new Ponto(p.X-A/2, p.Y+A/2, p.Z-A/2);
-		this.p7 = new Ponto(p.X-A/2, p.Y-A/2, p.Z+A/2);
+    this.p2 = new Ponto(p.X+A/2, p.Y+A/2, p.Z-A/2);
+    this.p3 = new Ponto(p.X+A/2, p.Y-A/2, p.Z+A/2);
+    this.p4 = new Ponto(p.X+A/2, p.Y-A/2, p.Z-A/2);
+    this.p5 = new Ponto(p.X-A/2, p.Y+A/2, p.Z+A/2);
+    this.p6 = new Ponto(p.X-A/2, p.Y+A/2, p.Z-A/2);
+    this.p7 = new Ponto(p.X-A/2, p.Y-A/2, p.Z+A/2);
   }
 
   PontosInt InterReta(Reta r){
@@ -753,6 +756,7 @@ class Pixel{
   Pixel(){
     this.cor = "Azul";
     this.visivel = false;
+    this.ptsInt = null;
   }
 
   Pixel(PontosInt ptsInt){
@@ -763,7 +767,21 @@ class Pixel{
   }
 
   String printOrdem(){
-    return ptsInt.ObjetosId();
+    if (ptsInt != null){
+      return ptsInt.ObjetosId();
+    }
+    else{
+      return "Nao ha interseccoes";
+    }
+  }
+
+  String printPontos(){
+    if (ptsInt != null){
+      return ptsInt.toString();
+    }
+    else{
+      return "Nao ha interseccoes";
+    }
   }
 }
 
@@ -774,25 +792,46 @@ class Imagem{
   int H, V;
 
   Imagem(int h, int v){
-    Pixel[][] pixels = new Pixel[h][v];
+    this.pixels = new Pixel[h][v];
+    for (int i = 0; i < h; i++){
+      for (int j = 0; j < v; j++){
+	pixels[i][j] = new Pixel();
+      }
+    }
     this.H = h;
     this.V = v;
   }
 
   void addPixel(Pixel p, int h, int v){
-    pixels[h][v] = p;
+    if (h <= H && h >= 0 && v <= V && v >= 0){
+      pixels[h][v] = p;
+    }
+    else{
+      System.out.println("posicao na imagem("+h+", "+v+") invalida");
+    }
   }
 
   void pixelNulo(int h, int v){
-    pixels[h][v] = new Pixel();
+    if (h <= H && h >= 0 && v <= V && v >= 0){
+      pixels[h][v] = new Pixel();
+    }
+    else{
+      System.out.println("posicao na imagem("+h+", "+v+") invalida");
+    }
   }
 
   Pixel getPixel(int h, int v){
-    return pixels[h][v];
+    if (h <= H && h >= 0 && v <= V && v >= 0){
+      return pixels[h][v];
+    }
+    else{
+      System.out.println("posicao na imagem("+h+", "+v+") invalida");
+    }
+    return null;
   }
 
   void atingido(int h, int v){
-    pixels[h][v].PrimeiroObjeto.acertado = true;
+    pixels[h][v].PrimeiroObjeto.Acertou();
     for (int i = 0; i < this.H; i++){
       for (int j = 0; j < this.V; j++){
         if (pixels[i][j].PrimeiroObjeto.acertado){
@@ -811,8 +850,8 @@ class Janela extends Frame{
     JLabel l3 = new JLabel("Ordem dos objetos atingidos:");
     JLabel l4 = new JLabel("Pontos atingidos:");
     JLabel posicao = new JLabel("");
-    JLabel ordem = new JLabel("");
-    JLabel pontos = new JLabel("");
+    JTextArea ordem = new JTextArea("");
+    JTextArea pontos = new JTextArea("");
     JLabel la = new JLabel("");
 
     l1.setBounds(20,40,100,30);
@@ -821,40 +860,43 @@ class Janela extends Frame{
     l3.setBounds(20,180,250,30);
     ordem.setBounds(20,215,250,30);
     l4.setBounds(20,250,250,30);
-    pontos.setBounds(20,285,250,30);
+    pontos.setBounds(20,285,250,90);
     l1.setVisible(true);
     l2.setVisible(true);
     l3.setVisible(true);
     l4.setVisible(true);
-    posição.setVisible(true);
+    posicao.setVisible(true);
     ordem.setVisible(true);
     pontos.setVisible(true);
 
     JTextField TiroX = new JTextField();
     JTextField TiroY = new JTextField();
 
-    TiroX.setBounds(20,80,80,20);
-    TiroY.setBounds(100,80,80,20);
+    TiroX.setBounds(20,80,50,20);
+    TiroY.setBounds(70,80,50,20);
 
     JButton Atirar = new JButton("Atirar");
 
-    Atirar.setBounds(130,40,100,30);
+    Atirar.setBounds(140,70,100,30);
 
     JPanel quadro = new JPanel();
 
     quadro.setBounds(300,50,400,400);
 
-    quadro.add(new DrawingComponent(I));
+    DrawingComponent desenho = new DrawingComponent(I);
+
+    quadro.add(desenho);
+    desenho.paint(new Graphics2D());
 
     Atirar.addActionListener(new ActionListener(){
       public void actionPerformed(ActionEvent e) {
         String s1 = TiroX.getText();
         String s2 = TiroY.getText();
-        int h = Integer.parseInt(s1);
-        int v = Integer.parseInt(s2);
+        int h = Integer.parseInt(s1) - 1;
+        int v = Integer.parseInt(s2) - 1;
         posicao.setText(M.buracos[h][v].toString());
         ordem.setText(I.pixels[h][v].printOrdem());
-        pontos.setText(I.pixels[h][v].ptsInt.toString());
+        pontos.setText(I.pixels[h][v].printPontos());
 	I.atingido(h,v);
         quadro.add(new DrawingComponent(I));
       }
