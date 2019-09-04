@@ -1,5 +1,7 @@
-// nao utilizei a forma normalizada dos vetores
-// falta terminar de configurar a localizacao de cada coisa na janela
+import java.lang.Math;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
 
 class Main {
   public static void main(String[] args) {
@@ -47,7 +49,6 @@ class Main {
 
 
 // --------- Ponto ----------
-import java.lang.Math;
 class Ponto {
   double X, Y, Z, T;
   int id; // figura ao qual o ponto pertence
@@ -334,7 +335,6 @@ class Muro extends Plano{ // Vetor do muro precisa ser paralelo ao eixo Z
 }
 
 // -------- Esfera ---------
-import java.lang.Math;
 class Esfera extends FigurasGeo{
   Ponto C; // Ponto do centro da esfera
   double R; // R = raio
@@ -391,7 +391,6 @@ class Esfera extends FigurasGeo{
 
 
 //  --------- Cilindro ---------
-import java.lang.Math;
 class Cilindro extends FigurasGeo{
   Ponto B; // Ponto da base do cilindro
   double R, H; // R = raio; H = altura
@@ -515,7 +514,6 @@ class Cilindro extends FigurasGeo{
 
 
 // -------- Cone ---------
-import java.lang.Math;
 class Cone extends FigurasGeo{ // cos**2(X) = H**2 / H**2 + R**2
   Vetor n; // Vetor direcional do cone
   Ponto C, V; // C = centro da base, V = vertice do cone
@@ -629,7 +627,6 @@ class Cone extends FigurasGeo{ // cos**2(X) = H**2 / H**2 + R**2
 }
 
 // ---------- Cubo ----------
-import java.lang.Math;
 class Cubo extends FigurasGeo{
   double A; // aresta
   Ponto p0, p1, p2, p3, p4, p5, p6, p7, p8;
@@ -806,10 +803,6 @@ class Imagem{
   }
 }
 // ---------- Janela -------------
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-
 class Janela extends Frame{
   Janela(Espaco E, Muro M, Imagem I){
 
@@ -880,7 +873,6 @@ class Janela extends Frame{
 }
 
 // ----------- Drawing Component --------------
-import java.awt.*;
 class DrawingComponent extends Component{
   Imagem I;
   DrawingComponent(Imagem I){
