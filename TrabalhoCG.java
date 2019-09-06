@@ -7,11 +7,11 @@ import java.text.DecimalFormat;
 class Main {
   public static void main(String[] args) {
     Espaco E = new Espaco();
-    E.addObjeto(new Cilindro(new Ponto(0,-2,-10), new Vetor(0,1,0), 0.5, 2, "Marrom", 1));
-    E.addObjeto(new Cone(new Ponto(0,0,-10), 3, 8, new Vetor(0,1,0), "Verde", 2));
-    E.addObjeto(new Cubo(new Ponto(0, 1,-20), 6, "Vermelho", 3));
-    E.addObjeto(new Cubo(new Ponto(0, 7,-20), 6, "Vermelho", 4));
-    E.addObjeto(new Cubo(new Ponto(0, 13,-20), 6, "Vermelho", 5));
+    E.addObjeto(new Cilindro(new Ponto(0,-2,-10), new Vetor(0,1,0), 0.5, 2, new RGB(139,69,19), 1));
+    E.addObjeto(new Cone(new Ponto(0,0,-10), 3, 8, new Vetor(0,1,0), new RGB(0,255,127), 2));
+    E.addObjeto(new Cubo(new Ponto(0, 1,-20), 6, new RGB(178,34,34), 3));
+    E.addObjeto(new Cubo(new Ponto(0, 7,-20), 6, new RGB(178,34,34), 4));
+    E.addObjeto(new Cubo(new Ponto(0, 13,-20), 6, new RGB(178,34,34), 5));
     //Ponto LookAt = new Ponto();
     //Ponto ViewUp = new Ponto();
     Ponto observador = new Ponto(0,0,0);
@@ -30,7 +30,6 @@ class Main {
           Pfinal = Pfinal.Uniao(p);
         }
         if (Pfinal.N != 0){
-          Pfinal.OrdenaPontos();
           FigurasGeo prim = E.getFigPorId(Pfinal.getPonto(0).id);
           Pfinal.setPrimObj(prim);
           Pixel Pix = new Pixel(Pfinal);
@@ -42,16 +41,33 @@ class Main {
         }
       }
     }
-    Janela janela = new Janela(E, painel, I);
+    System.out.println(I.pixels[200][150].printOrdem());
+    System.out.println(I.pixels[200][150].printPontos());
+    Quadro quadro = new Quadro(I);
+    //Janela janela = new Janela(E, painel, I);
   }
 }
+
+//---------- Quadro --------------
+class Quadro extends Frame{
+  Quadro(Imagem I){
+    add(new DrawingComponent(I));
+    setVisible(true);
+    setSize(I.H,I.V);
+    setLocation(150,150);
+    addWindowListener(new WindowAdapter(){
+      public void windowClosing(WindowEvent f){
+        dispose();  }    });
+  }
+}
+  
 
 
 // --------- Ponto ----------
 class Ponto {
   double X, Y, Z, T;
   int id; // figura ao qual o ponto pertence
-  String cor;
+  RGB cor;
 
   Ponto(double X, double Y, double Z){
     this.X = X;
@@ -73,7 +89,7 @@ class Ponto {
     this.id = id;
   }
 
-  void setCor(String cor){
+  void setCor(RGB cor){
     this.cor = cor;
   }
 
@@ -160,7 +176,15 @@ class PontosInt{ // Classe feita para guardar os pontos de intersecao
   }
 
   void addPonto(Ponto p){
-    this.pontos[this.N] = p;
+    if (this.N != 0 && pontos[0].T < p.T){
+      for (int i = 0; i < N; i++){
+        pontos[i+1] = pontos[i];
+      }
+      this.pontos[0] = p;
+    }
+    else{
+      this.pontos[this.N] = p;
+    }
     this.N += 1;
   }
 
@@ -179,21 +203,6 @@ class PontosInt{ // Classe feita para guardar os pontos de intersecao
       uniao.addPonto(this.getPonto(i));
     }
     return uniao;
-  }
-
-  void OrdenaPontos(){
-    boolean Aux2 = false; // Aux2 diz se esta ordenado ou nao
-    for (int i = 1; i < this.N; i++){
-      if (this.pontos[i-1].T < this.pontos[i].T){
-        Ponto Aux = this.pontos[i-1];
-        this.pontos[i-1] = this.pontos[i];
-        this.pontos[i] = Aux;
-        Aux2 = true;
-      }
-    }
-    if (Aux2){
-      this.OrdenaPontos();
-    }
   }
 
   String ObjetosId(){
@@ -341,10 +350,8 @@ class Muro extends Plano{ // Vetor do muro precisa ser paralelo ao eixo Z
 class Esfera extends FigurasGeo{
   Ponto C; // Ponto do centro da esfera
   double R; // R = raio
-  int id;
-  String cor;
 
-  Esfera(Ponto C, double R, String cor, int id){
+  Esfera(Ponto C, double R, RGB cor, int id){
     this.C = C;
     this.R = R;
     this.cor = cor;
@@ -399,7 +406,7 @@ class Cilindro extends FigurasGeo{
   double R, H; // R = raio; H = altura
   Vetor u; // Vetor unitario da direcao e sentido do cilindro
 
-  Cilindro(Ponto B, Vetor u, double R, double H, String cor, int id){
+  Cilindro(Ponto B, Vetor u, double R, double H, RGB cor, int id){
     this.B = B;
     this.u = u;
     this.R = R;
@@ -480,7 +487,7 @@ class Cilindro extends FigurasGeo{
         PtsValidos.addPonto(p2);
         p2V = true;
       }
-      if ((p1V && !(p2V)) || !((p1V) && p2V)){ // Apenas um pt valido
+      if ((p1V && !(p2V)) || (!(p1V) && p2V)){ // Apenas um pt valido
         Plano pl = new Plano(this.B, this.u);
         Ponto IntPlReta = pl.InterRetaPlano(r);
         double Dist = IntPlReta.Distancia(B);
@@ -497,7 +504,7 @@ class Cilindro extends FigurasGeo{
           PtsValidos.addPonto(Int);
         }
       }
-      if (!p1V && !p2V && ((Verif1 < 0 && Verif2 > H)||(Verif1 > H && Verif2 < 0))){ // Dois invalidos e um acima e outro abaixo do cilindro
+      if (!(p1V) && !(p2V) && ((Verif1 < 0 && Verif2 > H)||(Verif1 > H && Verif2 < 0))){ // Dois invalidos e um acima e outro abaixo do cilindro
         Plano pl = new Plano(this.B, this.u);
         Ponto IntPlaReta = pl.InterRetaPlano(r);
         Ponto IntRetaTopo = r.d.ProdEscalar(H).SomaPtVt(IntPlaReta);
@@ -522,7 +529,7 @@ class Cone extends FigurasGeo{ // cos**2(X) = H**2 / H**2 + R**2
   Ponto C, V; // C = centro da base, V = vertice do cone
   double H, R; // H = altura, R = raio
 
-  Cone(Ponto C, Ponto V, double R, double H, Vetor n, String cor, int id){
+  Cone(Ponto C, Ponto V, double R, double H, Vetor n, RGB cor, int id){
     this.n = n;
     this.H = H;
     this.R = R;
@@ -533,7 +540,7 @@ class Cone extends FigurasGeo{ // cos**2(X) = H**2 / H**2 + R**2
     this.acertado = false;
   }
 
-  Cone(Ponto C, double R, double H, Vetor n, String cor, int id){
+  Cone(Ponto C, double R, double H, Vetor n, RGB cor, int id){
     this.C = C;
     this.n = n;
     this.R = R;
@@ -544,7 +551,7 @@ class Cone extends FigurasGeo{ // cos**2(X) = H**2 / H**2 + R**2
     this.acertado = false;
   }
 
-  Cone(double R, double H, Vetor n, Ponto V, String cor, int id){
+  Cone(double R, double H, Vetor n, Ponto V, RGB cor, int id){
     this.V = V;
     this.H = H;
     this.R = R;
@@ -634,7 +641,7 @@ class Cubo extends FigurasGeo{
   double A; // aresta
   Ponto p0, p1, p2, p3, p4, p5, p6, p7, p8;
 
-  Cubo(Ponto p, double A, String cor, int id){
+  Cubo(Ponto p, double A, RGB cor, int id){
     this.p0 = p;
     this.A = A;
     this.cor = cor;
@@ -732,7 +739,7 @@ class Espaco{
 
 // ---------- Figuras Geometricas ---------
 abstract class FigurasGeo{
-  String cor;
+  RGB cor;
   int id;
   boolean acertado;
 
@@ -748,14 +755,14 @@ abstract class FigurasGeo{
 
 // --------- Pixel ---------
 class Pixel{
-  String cor;
+  RGB cor;
   PontosInt ptsInt;
   FigurasGeo PrimeiroObjeto;
   boolean visivel;
 
   Pixel(){
-    this.cor = "Azul";
-    this.visivel = false;
+    this.cor = new RGB(30,144,255);
+    this.visivel = true;
     this.ptsInt = null;
   }
 
@@ -763,7 +770,7 @@ class Pixel{
     this.ptsInt = ptsInt;
     this.cor = ptsInt.pontos[0].cor;
     this.PrimeiroObjeto = ptsInt.PrimObj;
-    this.visivel = false;
+    this.visivel = true;
   }
 
   String printOrdem(){
@@ -786,6 +793,17 @@ class Pixel{
 }
 
 
+//----------- RGB ----------
+class RGB{
+  int R, G, B;
+  RGB(int r, int g, int b){
+    this.R = r;
+    this.G = g;
+    this.B = b;
+  }
+}
+
+
 // ---------- Imagem ---------
 class Imagem{
   Pixel pixels[][];
@@ -804,7 +822,7 @@ class Imagem{
 
   void addPixel(Pixel p, int h, int v){
     if (h <= H && h >= 0 && v <= V && v >= 0){
-      pixels[h][v] = p;
+      pixels[h][V-v-1] = p;
     }
     else{
       System.out.println("posicao na imagem("+h+", "+v+") invalida");
@@ -841,6 +859,7 @@ class Imagem{
     }
   }
 }
+
 // ---------- Janela -------------
 class Janela extends Frame{
   Janela(Espaco E, Muro M, Imagem I){
@@ -854,13 +873,13 @@ class Janela extends Frame{
     JTextArea pontos = new JTextArea("");
     JLabel la = new JLabel("");
 
-    l1.setBounds(20,40,100,30);
-    l2.setBounds(20,110,250,30);
-    posicao.setBounds(20,145,200,30);
-    l3.setBounds(20,180,250,30);
-    ordem.setBounds(20,215,250,30);
-    l4.setBounds(20,250,250,30);
-    pontos.setBounds(20,285,250,90);
+    l1.setBounds(500,40,100,30);
+    l2.setBounds(500,110,250,30);
+    posicao.setBounds(500,145,200,30);
+    l3.setBounds(500,180,250,30);
+    ordem.setBounds(500,215,250,30);
+    l4.setBounds(500,250,250,30);
+    pontos.setBounds(500,285,250,90);
     l1.setVisible(true);
     l2.setVisible(true);
     l3.setVisible(true);
@@ -872,24 +891,28 @@ class Janela extends Frame{
     JTextField TiroX = new JTextField();
     JTextField TiroY = new JTextField();
 
-    TiroX.setBounds(20,80,50,20);
-    TiroY.setBounds(70,80,50,20);
+    TiroX.setBounds(500,80,50,20);
+    TiroY.setBounds(550,80,50,20);
 
     JButton Atirar = new JButton("Atirar");
+    JButton MostrarImagem = new JButton("Mostrar Imagem");
 
-    Atirar.setBounds(140,70,100,30);
+    Atirar.setBounds(620,70,100,30);
+    MostrarImagem.setBounds(620,30,150,30);
 
-    JPanel quadro = new JPanel();
-
-    quadro.setBounds(300,50,400,400);
-
-    DrawingComponent desenho = new DrawingComponent(I);
-
-    quadro.add(desenho);
-    desenho.paint(new Graphics2D());
+    MostrarImagem.addActionListener(new ActionListener(){
+      public void actionPerformed(ActionEvent e1) {
+        for (int i = 0; i < I.H; i++){
+          for (int j = 0; j < I.V; j++){
+            I.atingido(i,j);
+            Quadro aaa = new Quadro(I); 
+          }
+        }
+      }
+    });
 
     Atirar.addActionListener(new ActionListener(){
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent e2) {
         String s1 = TiroX.getText();
         String s2 = TiroY.getText();
         int h = Integer.parseInt(s1) - 1;
@@ -898,7 +921,7 @@ class Janela extends Frame{
         ordem.setText(I.pixels[h][v].printOrdem());
         pontos.setText(I.pixels[h][v].printPontos());
 	I.atingido(h,v);
-        quadro.add(new DrawingComponent(I));
+        Quadro aaa = new Quadro(I); 
       }
     });
 
@@ -906,11 +929,11 @@ class Janela extends Frame{
       public void windowClosing(WindowEvent f){
         dispose();  }    });
 
-    add(l1); add(l2); add(l3); add(l4); add(posicao); add(ordem); add(pontos); add(TiroX); add(TiroY); add(Atirar); add(quadro); add(la);
+    add(l1); add(l2); add(l3); add(l4); add(posicao); add(ordem); add(pontos); add(TiroX); add(TiroY); add(Atirar); add(MostrarImagem); add(la);
 
     setVisible(true);
-    setSize(750,500);
-    setLocation(150,150);
+    setSize(900,500);
+    setLocation(120,150);
   }
 }
 
@@ -923,22 +946,8 @@ class DrawingComponent extends Component{
   public void paint(Graphics g){
     for (int i = 0; i < I.H; i++){
       for (int j = 0; j < I.V; j++){
-        if (!(I.pixels[i][j].visivel)){
-          g.setColor(Color.BLUE);
-        }
-        if (I.pixels[i][j].equals("Azul")){
-          g.setColor(Color.BLUE);
-        }
-        if (I.pixels[i][j].equals("Marrom")){
-          g.setColor(new Color(150,75,0));
-        }
-        if (I.pixels[i][j].equals("Verde")){
-          g.setColor(Color.GREEN);
-        }
-        if (I.pixels[i][j].equals("Vermelho")){
-          g.setColor(Color.RED);
-        }
-        g.drawLine(i,j,i,j);
+        g.setColor(new Color(I.pixels[i][j].cor.R, I.pixels[i][j].cor.G, I.pixels[i][j].cor.B));
+        g.drawRect(i,j,1,1);
       }
     }
   }
